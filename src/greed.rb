@@ -1,12 +1,53 @@
+class GreedGame
+
+  def playGame
+    puts 'Welcome to GREED'
+    puts
+    player_names = []
+    while player_names.size < 2 do
+      puts 'Please type the name of the players (two or more), separated by a comma:'
+      player_names = gets.chomp.split(',').each { |name| name.strip! }
+    end
+
+  end
+
+end
+
+class GamePlayers
+  def initialize(player_names)
+    raise(ArgumentError, 'My argument should be an array') unless player_names.is_a?(Array)
+    raise(ArgumentError, 'My argument should contain at least two elements') unless player_names.size >= 2
+    raise(ArgumentError, 'The elements in the array should all be strings') unless player_names.all? { |name| name.is_a?(String) }
+    @array_players = Array.new
+    player_names.each do |name|
+      player = GreedPlayer.new
+      player.name = name
+      @array_players << player
+    end
+    @current_index = 0
+  end
+
+  def next
+    if @current_index >= @array_players.size
+      @current_index = 0
+    end
+    current_player = @array_players[@current_index]
+    @current_index += 1
+    return current_player
+  end
+end
+
 class GreedPlayer
   NB_OF_DICE = 5
-  attr_accessor :turn_score
-  attr_reader :total_score
+  GETINTHEGAME_POINTS_REQUIRED = 300
+  attr_accessor :turn_score, :total_score, :name
+  attr_reader :final_round
 
   def initialize
     @turn_score = 0
     @total_score = 0
     @diceSet = DiceSet.new
+    @final_round = false
   end
 
   def playTurn
@@ -38,14 +79,31 @@ class GreedPlayer
       end
     end # while dicesToRoll > 0
 
-    reactToTurnScore
-        # TODO puts info sur le total score dans les deux cas
+    if reactToTurnScore
+      puts "  In this turn, you have added #{turn_score} points to your score."
+    elsif @turn_score > 0
+      puts "  In this turn, your score of #{turn_score} points wasn't enough to \"get in the game\" (min. #{GETINTHEGAME_POINTS_REQUIRED} points required)."
+    end
 
-    puts "* Total points earned in this turn: #{turn_score}."
+    puts "Your total score is: #{total_score} points."
+
+    unless @final_round
+      detectEndGame?
+    end
+
+    puts
+  end
+
+  def detectEndGame?
+    if total_score >= 3000
+      @final_round = true
+      return true
+    end
+    return false
   end
 
   def reactToTurnScore
-    if @turn_score >= 300 or @total_score >= 300
+    if @turn_score >= GETINTHEGAME_POINTS_REQUIRED or @total_score >= GETINTHEGAME_POINTS_REQUIRED
       @total_score += @turn_score
       return @turn_score > 0
     end
@@ -134,4 +192,11 @@ def score(dice)
   end
 
   return [scoring_dice, score, non_scoring_dice]
+end
+
+if __FILE__ == $0
+  #gp = GreedPlayer.new
+  #gp.playTurn
+  game = GreedGame.new
+  game.playGame
 end

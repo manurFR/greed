@@ -1,6 +1,55 @@
 require 'test/unit'
 require File.dirname(__FILE__) + '/greed'
 
+class GreedGameTest < Test::Unit::TestCase
+  def setup
+    @game = GreedGame.new
+  end
+end
+
+class GamePlayersTest < Test::Unit::TestCase
+  def setup
+    @players = GamePlayers.new(%w(albert bertha carl diana))
+  end
+
+  def test_initialize_argument_should_be_a_array_of_at_least_two_strings
+    assert_raise_with_message(ArgumentError, 'My argument should be an array') do
+      GamePlayers.new('hello')
+    end
+    assert_raise_with_message(ArgumentError, 'My argument should contain at least two elements') do
+      GamePlayers.new(['hello'])
+    end
+    assert_raise_with_message(ArgumentError, 'The elements in the array should all be strings') do
+      GamePlayers.new([1,8,6])
+    end
+    assert_nothing_raised do
+      GamePlayers.new(['hello', 'world'])
+    end
+  end
+
+  def test_next_should_return_all_players_in_the_right_order
+    albert = @players.next
+    assert_equal true, albert.is_a?(GreedPlayer)
+    assert_equal 'albert', albert.name
+    bertha = @players.next
+    assert_equal true, bertha.is_a?(GreedPlayer)
+    assert_equal 'bertha', bertha.name
+    carl = @players.next
+    assert_equal true, carl.is_a?(GreedPlayer)
+    assert_equal 'carl', carl.name
+    diana = @players.next
+    assert_equal true, diana.is_a?(GreedPlayer)
+    assert_equal 'diana', diana.name
+  end
+
+  def test_next_should_wrap_to_the_beginning
+    4.times { @players.next }
+    albert_again = @players.next
+    assert_not_nil albert_again
+    assert_equal 'albert', albert_again.name
+  end
+end
+
 class GreedPlayerTest < Test::Unit::TestCase
 
   def setup
@@ -54,6 +103,17 @@ class GreedPlayerTest < Test::Unit::TestCase
     @greed_player.turn_score = 0 # case of a roll that doesn't score anything, we expect false although total_score is >= 300
     assert_equal false, @greed_player.reactToTurnScore
     assert_equal 400, @greed_player.total_score
+  end
+
+  def test_end_game_happens_if_the_total_score_reaches_3000_points
+    assert_equal 0, @greed_player.total_score
+    assert_equal false, @greed_player.final_round
+    @greed_player.total_score = 450
+    assert_equal false, @greed_player.detectEndGame?
+    assert_equal false, @greed_player.final_round
+    @greed_player.total_score = 3000
+    assert_equal true, @greed_player.detectEndGame?
+    assert_equal true, @greed_player.final_round
   end
 
 end
