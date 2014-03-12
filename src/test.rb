@@ -1,6 +1,63 @@
 require 'test/unit'
 require File.dirname(__FILE__) + '/greed'
 
+class GreedPlayerTest < Test::Unit::TestCase
+
+  def setup
+    @greed_player = GreedPlayer.new
+  end
+
+  def test_greedplayer_exists
+    assert_nothing_raised do
+      GreedPlayer.new
+    end
+  end
+
+  def test_positive_score_is_accumulated_in_turn_score
+    assert_equal 0, @greed_player.turn_score
+    assert_equal false, @greed_player.reactToRollScore(-5)
+    assert_equal 0, @greed_player.turn_score
+    assert_equal false, @greed_player.reactToRollScore(0)
+    assert_equal 0, @greed_player.turn_score
+    assert_equal true, @greed_player.reactToRollScore(25)
+    assert_equal 25, @greed_player.turn_score
+    assert_equal true, @greed_player.reactToRollScore(15)
+    assert_equal 40, @greed_player.turn_score
+  end
+
+  def test_pluralize
+    word_options = %w(knife knives)
+    assert_equal '1 knife', @greed_player.pluralize(1, word_options)
+    assert_equal '0 knife', @greed_player.pluralize(0, word_options)
+    assert_equal '-1 knife', @greed_player.pluralize(-1, word_options)
+    assert_equal '2 knives', @greed_player.pluralize(2, word_options)
+    assert_equal '486 knives', @greed_player.pluralize(486, word_options)
+  end
+
+  def test_determineDicesToRoll
+    assert_equal 0, @greed_player.determineDicesToRoll(false, 3)
+    assert_equal 3, @greed_player.determineDicesToRoll(true, 3)
+    assert_equal 5, @greed_player.determineDicesToRoll(true, 0)
+  end
+
+  def test_this_turns_score_is_kept_only_if_its_larger_than_300_points_or_total_score_is_already_larger
+    assert_equal 0, @greed_player.total_score
+    @greed_player.turn_score = 100
+    assert_equal false, @greed_player.reactToTurnScore
+    assert_equal 0, @greed_player.total_score
+    @greed_player.turn_score = 300
+    assert_equal true, @greed_player.reactToTurnScore
+    assert_equal 300, @greed_player.total_score
+    @greed_player.turn_score = 100
+    assert_equal true, @greed_player.reactToTurnScore
+    assert_equal 400, @greed_player.total_score
+    @greed_player.turn_score = 0 # case of a roll that doesn't score anything, we expect false although total_score is >= 300
+    assert_equal false, @greed_player.reactToTurnScore
+    assert_equal 400, @greed_player.total_score
+  end
+
+end
+
 #noinspection RubyQuotedStringsInspection
 class DiceSetTest < Test::Unit::TestCase
   def test_can_create_a_dice_set
