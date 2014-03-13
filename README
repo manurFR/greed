@@ -1,10 +1,8 @@
 GREED
 
-This was made as the "extra credit" to the Ruby Koans (http://rubykoans.com/), a wonderful TDD tutorial to teach
-yourself Ruby.
+This was made as the "extra credit" to the Ruby Koans (http://rubykoans.com/), a wonderful TDD tutorial to teach yourself Ruby.
 
-It is my first attempt at coding in Ruby. As such, it certainly lacks elegance, clarity and is probably not
-written in "fluent" Ruby.
+It is my first attempt at coding in Ruby. As such, it certainly lacks elegance, clarity and is probably not written in "fluent" Ruby.
 All advice is welcome.
 
 This is a multi-player, "pass-the-keyboard", dice game. Launch a game with:
