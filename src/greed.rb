@@ -1,4 +1,9 @@
 class GreedGame
+  attr_reader :final_round
+
+  def initialize
+    @final_round = false
+  end
 
   def playGame
     puts 'Welcome to GREED'
@@ -7,33 +12,73 @@ class GreedGame
     while player_names.size < 2 do
       puts 'Please type the name of the players (two or more), separated by a comma:'
       player_names = gets.chomp.split(',').each { |name| name.strip! }
+      puts
     end
 
+    players = GamePlayers.new(player_names)
+
+    current_player = players.next
+    while current_player do # nil (ie no more players) is false
+      puts "#{current_player.name.capitalize}, it's your turn. Your total score is currently #{current_player.total_score} points."
+
+      current_player.playTurn
+
+      unless @final_round
+        if detectFinalRound?(current_player.total_score)
+          puts "#{current_player.name.capitalize} has reached 3000 points. All the other players can play one last turn and then the game will be over."
+          puts
+          sleep(2)
+          players.setCurrentPlayerAsStoppingPlayer
+        end
+      end
+      current_player = players.next
+      sleep(1)
+
+      puts current_player ? 'Current Scores' : ' Final Scores'
+      puts '=============='
+      puts
+
+      players.players_by_scores.each_with_index do |player, index|
+        puts "#{index+1}. #{player.name.capitalize}: #{player.total_score} points"
+      end
+      puts
+    end
   end
 
+  def detectFinalRound?(total_score)
+    if total_score >= 3000
+      @final_round = true
+      return true
+    end
+    return false
+  end
 end
 
 class GamePlayers
   def initialize(player_names)
-    raise(ArgumentError, 'My argument should be an array') unless player_names.is_a?(Array)
-    raise(ArgumentError, 'My argument should contain at least two elements') unless player_names.size >= 2
+    raise(ArgumentError, 'The argument should be an array') unless player_names.is_a?(Array)
+    raise(ArgumentError, 'The argument should contain at least two elements') unless player_names.size >= 2
     raise(ArgumentError, 'The elements in the array should all be strings') unless player_names.all? { |name| name.is_a?(String) }
     @array_players = Array.new
-    player_names.each do |name|
-      player = GreedPlayer.new
-      player.name = name
-      @array_players << player
-    end
-    @current_index = 0
+    player_names.each { |name| @array_players << GreedPlayer.new(name) }
+    @current_index = -1
+    @stopping_index = nil
   end
 
   def next
+    @current_index += 1
     if @current_index >= @array_players.size
       @current_index = 0
     end
-    current_player = @array_players[@current_index]
-    @current_index += 1
-    return current_player
+    (@current_index == @stopping_index) ? nil : @array_players[@current_index]
+  end
+
+  def setCurrentPlayerAsStoppingPlayer
+    @stopping_index = @current_index
+  end
+
+  def players_by_scores
+    @array_players.sort { |elt, other| elt.total_score <=> other.total_score }.reverse
   end
 end
 
@@ -41,16 +86,15 @@ class GreedPlayer
   NB_OF_DICE = 5
   GETINTHEGAME_POINTS_REQUIRED = 300
   attr_accessor :turn_score, :total_score, :name
-  attr_reader :final_round
 
-  def initialize
-    @turn_score = 0
+  def initialize(name)
+    @name = name
     @total_score = 0
     @diceSet = DiceSet.new
-    @final_round = false
   end
 
   def playTurn
+    @turn_score = 0
     rollNumber = 0
 
     dicesToRoll = NB_OF_DICE
@@ -86,20 +130,7 @@ class GreedPlayer
     end
 
     puts "Your total score is: #{total_score} points."
-
-    unless @final_round
-      detectEndGame?
-    end
-
     puts
-  end
-
-  def detectEndGame?
-    if total_score >= 3000
-      @final_round = true
-      return true
-    end
-    return false
   end
 
   def reactToTurnScore
@@ -119,7 +150,7 @@ class GreedPlayer
   end
 
   def askForAuthorization?
-    return gets.chomp.upcase[0] == 'Y'
+    return gets.chomp.upcase[0] != 'N'
   end
 
   def pluralize(number, options)
@@ -195,8 +226,6 @@ def score(dice)
 end
 
 if __FILE__ == $0
-  #gp = GreedPlayer.new
-  #gp.playTurn
   game = GreedGame.new
   game.playGame
 end

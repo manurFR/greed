@@ -5,6 +5,16 @@ class GreedGameTest < Test::Unit::TestCase
   def setup
     @game = GreedGame.new
   end
+
+  def test_final_round_starts_if_the_total_score_reaches_3000_points
+    assert_equal false, @game.final_round
+
+    assert_equal false, @game.detectFinalRound?(450)
+    assert_equal false, @game.final_round
+
+    assert_equal true, @game.detectFinalRound?(3000)
+    assert_equal true, @game.final_round
+  end
 end
 
 class GamePlayersTest < Test::Unit::TestCase
@@ -13,10 +23,10 @@ class GamePlayersTest < Test::Unit::TestCase
   end
 
   def test_initialize_argument_should_be_a_array_of_at_least_two_strings
-    assert_raise_with_message(ArgumentError, 'My argument should be an array') do
+    assert_raise_with_message(ArgumentError, 'The argument should be an array') do
       GamePlayers.new('hello')
     end
-    assert_raise_with_message(ArgumentError, 'My argument should contain at least two elements') do
+    assert_raise_with_message(ArgumentError, 'The argument should contain at least two elements') do
       GamePlayers.new(['hello'])
     end
     assert_raise_with_message(ArgumentError, 'The elements in the array should all be strings') do
@@ -48,22 +58,35 @@ class GamePlayersTest < Test::Unit::TestCase
     assert_not_nil albert_again
     assert_equal 'albert', albert_again.name
   end
+
+  def test_once_a_stopping_player_is_defined_then_his_next_appearance_should_instead_return_nil
+    6.times { assert_not_nil @players.next } # at least one full loop without nil
+    @players.setCurrentPlayerAsStoppingPlayer # bertha is the stopping player
+    3.times { assert_not_nil @players.next } # each of the others can play once
+    assert_equal true, @players.next.nil?
+  end
+
+  def test_scores
+    albert = @players.next
+    albert.total_score = 500
+    bertha = @players.next
+    bertha.total_score = 3820
+    carl = @players.next
+    carl.total_score = 2900
+    diana = @players.next
+    diana.total_score = 1150
+
+    assert_equal [bertha, carl, diana, albert], @players.players_by_scores
+  end
 end
 
 class GreedPlayerTest < Test::Unit::TestCase
-
   def setup
-    @greed_player = GreedPlayer.new
-  end
-
-  def test_greedplayer_exists
-    assert_nothing_raised do
-      GreedPlayer.new
-    end
+    @greed_player = GreedPlayer.new('myName')
   end
 
   def test_positive_score_is_accumulated_in_turn_score
-    assert_equal 0, @greed_player.turn_score
+    assert_equal nil, @greed_player.turn_score
     assert_equal false, @greed_player.reactToRollScore(-5)
     assert_equal 0, @greed_player.turn_score
     assert_equal false, @greed_player.reactToRollScore(0)
@@ -104,18 +127,6 @@ class GreedPlayerTest < Test::Unit::TestCase
     assert_equal false, @greed_player.reactToTurnScore
     assert_equal 400, @greed_player.total_score
   end
-
-  def test_end_game_happens_if_the_total_score_reaches_3000_points
-    assert_equal 0, @greed_player.total_score
-    assert_equal false, @greed_player.final_round
-    @greed_player.total_score = 450
-    assert_equal false, @greed_player.detectEndGame?
-    assert_equal false, @greed_player.final_round
-    @greed_player.total_score = 3000
-    assert_equal true, @greed_player.detectEndGame?
-    assert_equal true, @greed_player.final_round
-  end
-
 end
 
 #noinspection RubyQuotedStringsInspection
