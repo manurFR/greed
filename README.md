@@ -16,7 +16,7 @@ If you are so inclined, you can run the tests by going to the src/ directory:
 
 Schematic algorithm:
 
-![Algorithm](algorithm.jpg "Algorithm")
+![Algorithm](algorithm.png "Algorithm")
 
 
 [This code is licensed under the terms of the MIT license.]
