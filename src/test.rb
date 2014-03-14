@@ -1,6 +1,31 @@
 require 'test/unit'
 require File.dirname(__FILE__) + '/greed'
 
+unless respond_to? :assert_raise_with_message
+  def assert_raise_with_message(exception, expected, msg = nil, &block)
+    case expected
+      when String
+        assert = :assert_equal
+      when Regexp
+        assert = :assert_match
+      else
+        raise TypeError, "Expected #{expected.inspect} to be a kind of String or Regexp, not #{expected.class}"
+    end
+
+    ex = assert_raise(exception, *msg) {yield}
+    msg = message(msg, "") {"Expected Exception(#{exception}) was raised, but the message doesn't match"}
+
+    if assert == :assert_equal
+      assert_equal(expected, ex.message, msg)
+    else
+      msg = message(msg) { "Expected #{mu_pp expected} to match #{mu_pp ex.message}" }
+      assert expected =~ ex.message, msg
+      block.binding.eval("proc{|_|$~=_}").call($~)
+    end
+    ex
+  end
+end
+
 class GreedGameTest < Test::Unit::TestCase
   def setup
     @game = GreedGame.new
